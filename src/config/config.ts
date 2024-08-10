@@ -3,7 +3,7 @@ conf();
 
 const _config = {
   port: process.env.PORT || 3000,
-  //   add other configurations here
+  databaseURL: process.env.MONGO_CONNECTION_STRING,
 };
 
 export const config = Object.freeze(_config); // freeze the object to prevent modification on runtime
