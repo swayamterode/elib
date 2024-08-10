@@ -7,6 +7,11 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to the elib API project 👋🏻" });
 });
 
+//  Routes
+import userRouter from "./user/userRouter";
+
+app.use("/api/users", userRouter);
+
 // Global error handler middleware
 app.use(globalErrorHandler);
 
