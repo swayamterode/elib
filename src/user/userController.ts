@@ -95,7 +95,5 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
       createHttpError(500, "An error occurred while processing your request")
     );
   }
-
-  res.json({ message: "test OK" });
 };
 export { createUser, loginUser };
