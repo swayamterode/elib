@@ -10,7 +10,11 @@ app.get("/", (req, res) => {
 
 //  Routes
 import userRouter from "./user/userRouter";
+import bookRouter from "./book/bookRouter";
+
 app.use("/api/users", userRouter);
+app.use("/api/books", bookRouter);
+
 // Global error handler middleware
 app.use(globalErrorHandler);
 
