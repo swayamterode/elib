@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 import userModel from "./userModel";
 import { sign } from "jsonwebtoken";
 import { config } from "../config/config";
-
 const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const { name, email, password } = req.body;
 
@@ -65,4 +64,38 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { createUser };
+const loginUser = async (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    next(createHttpError(400, "All fields are required"));
+  }
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return next(
+        createHttpError(400, `User with ${email} email does not exist`)
+      );
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return next(createHttpError(400, "Invalid password for this email"));
+    }
+    const token = sign({ sub: user._id }, config.jwtSecret as string, {
+      expiresIn: "7d",
+      algorithm: "HS256",
+    });
+    res.json({
+      success: true,
+      message: "User logged in successfully",
+      accessToken: token,
+      userId: user._id,
+    });
+  } catch (error) {
+    next(
+      createHttpError(500, "An error occurred while processing your request")
+    );
+  }
+
+  res.json({ message: "test OK" });
+};
+export { createUser, loginUser };

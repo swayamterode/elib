@@ -11,7 +11,6 @@ app.get("/", (req, res) => {
 //  Routes
 import userRouter from "./user/userRouter";
 app.use("/api/users", userRouter);
-
 // Global error handler middleware
 app.use(globalErrorHandler);
 
