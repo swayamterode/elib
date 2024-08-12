@@ -78,111 +78,6 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-// const updateBook = async (
-//   req: AuthRequest,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const bookId = req.params.bookId;
-//   const { title, genre } = req.body;
-//   try {
-//     const book = await bookModel.findOne({ _id: bookId }); // find the book by id return null if not found or the book object
-//     if (!book) {
-//       next(createHttpError(404, "Book not found"));
-//     }
-//     if (book && book.author.toString() !== req.userId) {
-//       return next(
-//         createHttpError(
-//           403,
-//           "You are not allowed to update this book (Unauthorized)!"
-//         )
-//       );
-//     }
-//     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-//     if (!files.coverImage) {
-//       next(createHttpError(400, "Cover Image is required"));
-//     }
-//     if (!files.file) {
-//       next(createHttpError(400, "Book pdf is required"));
-//     }
-//     // for updating the cover image
-//     let completeCoverImage = "";
-//     if (files.coverImage) {
-//       const fileName = files.coverImage[0].filename;
-//       const coverMineType = files.coverImage[0].mimetype.split("/").at(-1);
-//       const filePath = path.resolve(
-//         __dirname,
-//         "../../public/data/uploads" + fileName
-//       );
-//       completeCoverImage = `${fileName}.Date.now()`;
-//       const uploadNewCoverImage = await cloudinary.uploader.upload(filePath, {
-//         folder: "book-covers",
-//         format: coverMineType,
-//         filename_override: completeCoverImage,
-//       });
-//       completeCoverImage = uploadNewCoverImage.secure_url; // get the secure url of the uploaded image
-//       try {
-//         await fs.promises.unlink(completeCoverImage);
-//       } catch (error) {
-//         next(
-//           createHttpError(
-//             500,
-//             "Error in deleting Cover Image from public folder"
-//           )
-//         );
-//       }
-//     }
-//     // for updating the book pdf
-//     let completeBook = "";
-//     if (files.file) {
-//       const BookFileName = files.file[0].filename;
-//       const bookMineType = files.file[0].mimetype.split("/").at(-1);
-//       const filePath = path.resolve(
-//         __dirname,
-//         "../../public/data/uploads" + BookFileName
-//       );
-//       completeBook = BookFileName;
-//       const uploadNewBook = await cloudinary.uploader.upload(filePath, {
-//         folder: "books-pdf",
-//         resource_type: "raw",
-//         format: bookMineType,
-//         filename_override: completeBook,
-//       });
-//       completeBook = uploadNewBook.secure_url;
-//       try {
-//         await fs.promises.unlink(completeBook);
-//       } catch (error) {
-//         next(createHttpError(500, "Error in deleting Book from public folder"));
-//       }
-//     }
-//     // update the book
-//     const updatedBook = await bookModel.findOneAndUpdate(
-//       { _id: bookId },
-//       {
-//         title: title,
-//         genre: genre,
-//         coverImage: completeCoverImage
-//           ? completeCoverImage
-//           : book?.coverImage || "",
-//         file: completeBook ? completeBook : book?.file || "",
-//       },
-//       { new: true }
-//     );
-//     res.status(200).json({
-//       success: "true",
-//       message: "Book updated successfully",
-//       data: {
-//         id: updatedBook?._id,
-//         title: updatedBook?.title,
-//         genre: updatedBook?.genre,
-//         coverImage: updatedBook?.coverImage,
-//         file: updatedBook?.file,
-//       },
-//     });
-//   } catch (error) {
-//     next(createHttpError(500, "Cannot update book check back later"));
-//   }
-// };
 const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   const { title, description, genre } = req.body;
   const bookId = req.params.bookId;
@@ -260,4 +155,25 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   res.json(updatedBook);
 };
 
-export { createBook, updateBook };
+const listOfBooks = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const books = await bookModel
+      .find({ ...req.query }) // get all books
+      .limit(Number(limit)) // limit the number of books
+      .skip((Number(page) - 1) * Number(limit)) // pagination
+      .sort({ createdAt: -1 }); // sort by createdAt in descending order
+
+    const totalBooks = await bookModel.countDocuments();
+    res.json({
+      TotalBooks: totalBooks,
+      totalPages: Math.ceil(totalBooks / Number(limit)),
+      currentPage: page,
+      books,
+    });
+  } catch (err) {
+    return next(createHttpError(500, "Error while getting a book"));
+  }
+};
+
+export { createBook, updateBook, listOfBooks };
